@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { AgGridAngular } from 'ag-grid-angular';
 import {
   ColDef,
@@ -33,6 +33,8 @@ interface ProductRow {
 export class AppComponent {
   private gridApi?: GridApi<ProductRow>;
 
+  constructor(private ngZone: NgZone) {}
+
   editingSubject = false;
   subjectBeingEdited = '';
   editedSubjectName = '';
@@ -51,14 +53,18 @@ export class AppComponent {
 
   columnDefs: ColDef<ProductRow>[] = [
     { field: 'subject', rowGroup: true, hide: true },
-    { field: 'sku', headerName: 'SKU', width: 150 },
+    {
+      field: 'sku',
+      headerName: 'SKU',
+      width: 175,
+      rowDrag: params => !params.node.group,
+      cellClass: 'product-drag-cell'
+    },
     {
       field: 'product',
       headerName: 'Product',
       flex: 1,
-      minWidth: 300,
-      rowDrag: params => !params.node.group,
-      cellClass: 'product-drag-cell'
+      minWidth: 300
     },
     { field: 'qty', headerName: 'Qty', width: 100, editable: true },
     {
@@ -97,7 +103,10 @@ export class AppComponent {
         editButton.addEventListener('click', event => {
           event.preventDefault();
           event.stopPropagation();
-          this.openSubjectEditor(String(params.node.key ?? params.value ?? ''));
+
+          this.ngZone.run(() => {
+            this.openSubjectEditor(String(params.node.key ?? params.value ?? ''));
+          });
         });
 
         wrapper.append(name, editButton);
@@ -129,10 +138,16 @@ export class AppComponent {
   openSubjectEditor(subject: string): void {
     const value = subject.trim();
     if (!value) return;
+
     this.subjectBeingEdited = value;
     this.editedSubjectName = value;
     this.editingSubject = true;
-    setTimeout(() => document.querySelector<HTMLInputElement>('#subject-name-input')?.focus());
+
+    setTimeout(() => {
+      const input = document.querySelector<HTMLInputElement>('#subject-name-input');
+      input?.focus();
+      input?.select();
+    });
   }
 
   cancelSubjectEdit(): void {
