@@ -1,0 +1,13 @@
+:host { display: block; min-height: 100vh; }
+.page-shell { max-width: 1440px; margin: 0 auto; padding: 32px; }
+.hero { display: flex; justify-content: space-between; gap: 32px; align-items: end; margin-bottom: 20px; }
+.eyebrow { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
+h1 { margin: 0; font-size: 30px; }
+.intro { max-width: 780px; margin: 10px 0 0; color: #64748b; line-height: 1.5; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; }
+.legend span { background: white; border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 12px; font-size: 13px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.grid-card { overflow: hidden; background: white; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
+:host ::ng-deep .ag-row-group .subject-name { font-weight: 700; }
+:host ::ng-deep .drag-cell { cursor: grab; }
+:host ::ng-deep .drag-cell:active { cursor: grabbing; }
+@media (max-width: 800px) { .page-shell { padding: 16px; } .hero { align-items: start; flex-direction: column; } }
