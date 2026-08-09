@@ -3,10 +3,10 @@
     <div>
       <p class="eyebrow">BTS Pack Builder Prototype</p>
       <h1>Products grouped by subject</h1>
-      <p class="intro">Drag a product row into another subject. Double-click a subject name to rename it. Subjects themselves cannot be dragged.</p>
+      <p class="intro">Use the drag handle beside a product to move it into another subject. Click the edit icon beside a subject name to rename it. Subjects themselves cannot be dragged.</p>
     </div>
     <div class="legend">
-      <span>↕ Product = movable</span>
+      <span>⋮⋮ Product = movable</span>
       <span>📁 Subject = fixed</span>
     </div>
   </section>
@@ -21,11 +21,39 @@
       [groupDefaultExpanded]="groupDefaultExpanded"
       [rowDragManaged]="rowDragManaged"
       [suppressMoveWhenRowDragging]="suppressMoveWhenRowDragging"
+      [refreshAfterGroupEdit]="refreshAfterGroupEdit"
       [animateRows]="animateRows"
       [getRowId]="getRowId"
       (gridReady)="onGridReady($event)"
-      (rowDragEnd)="onRowDragEnd($event)"
-      (cellDoubleClicked)="onCellDoubleClicked($event)">
+      (rowDragEnd)="onRowDragEnd($event)">
     </ag-grid-angular>
   </section>
 </main>
+
+@if (editingSubject) {
+  <div class="modal-backdrop" (click)="cancelSubjectEdit()">
+    <section class="subject-modal" role="dialog" aria-modal="true" aria-labelledby="subject-modal-title" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Edit subject</p>
+          <h2 id="subject-modal-title">Rename {{ subjectBeingEdited }}</h2>
+        </div>
+        <button type="button" class="modal-close" aria-label="Close" (click)="cancelSubjectEdit()">×</button>
+      </div>
+
+      <label for="subject-name-input">Subject name</label>
+      <input
+        id="subject-name-input"
+        type="text"
+        [value]="editedSubjectName"
+        (input)="editedSubjectName = $any($event.target).value"
+        (keydown.enter)="saveSubjectEdit()"
+        (keydown.escape)="cancelSubjectEdit()" />
+
+      <div class="modal-actions">
+        <button type="button" class="button secondary" (click)="cancelSubjectEdit()">Cancel</button>
+        <button type="button" class="button primary" [disabled]="!editedSubjectName.trim()" (click)="saveSubjectEdit()">Save changes</button>
+      </div>
+    </section>
+  </div>
+}
