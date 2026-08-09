@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { AgGridAngular } from 'ag-grid-angular';
 import {
-  CellClassParams,
   ColDef,
   GetRowIdParams,
   GridApi,
@@ -34,6 +33,10 @@ interface ProductRow {
 export class AppComponent {
   private gridApi?: GridApi<ProductRow>;
 
+  editingSubject = false;
+  subjectBeingEdited = '';
+  editedSubjectName = '';
+
   rowData: ProductRow[] = [
     { id: 1, subject: 'English', sku: 'BK-ENG-101', product: 'English Activity Book', qty: 1, price: 8.95 },
     { id: 2, subject: 'English', sku: 'ST-PEN-BLU', product: 'Blue Ballpoint Pen', qty: 2, price: 1.20 },
@@ -47,16 +50,16 @@ export class AppComponent {
   ];
 
   columnDefs: ColDef<ProductRow>[] = [
-    {
-      headerName: '', width: 52, minWidth: 52, maxWidth: 52,
-      sortable: false, filter: false, resizable: false,
-      suppressHeaderMenuButton: true,
-      rowDrag: params => !params.node.group,
-      cellClass: (params: CellClassParams<ProductRow>) => params.node.group ? 'no-drag-cell' : 'drag-cell'
-    },
     { field: 'subject', rowGroup: true, hide: true },
     { field: 'sku', headerName: 'SKU', width: 150 },
-    { field: 'product', headerName: 'Product', flex: 1, minWidth: 260 },
+    {
+      field: 'product',
+      headerName: 'Product',
+      flex: 1,
+      minWidth: 300,
+      rowDrag: params => !params.node.group,
+      cellClass: 'product-drag-cell'
+    },
     { field: 'qty', headerName: 'Qty', width: 100, editable: true },
     {
       field: 'price', headerName: 'Price', width: 120,
@@ -72,14 +75,33 @@ export class AppComponent {
   defaultColDef: ColDef<ProductRow> = { sortable: true, resizable: true, filter: true };
 
   autoGroupColumnDef: ColDef<ProductRow> = {
-    headerName: 'Subject / Product', minWidth: 260, flex: 1,
+    headerName: 'Subject', minWidth: 290, flex: 1,
     cellRendererParams: {
       suppressCount: false,
       innerRenderer: (params: ICellRendererParams<ProductRow>) => {
-        if (params.node.group) {
-          return `<span class="subject-name">${this.escapeHtml(String(params.value ?? ''))}</span>`;
-        }
-        return '';
+        if (!params.node.group) return '';
+
+        const wrapper = document.createElement('span');
+        wrapper.className = 'subject-display';
+
+        const name = document.createElement('span');
+        name.className = 'subject-name';
+        name.textContent = String(params.value ?? '');
+
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'subject-edit-button';
+        editButton.title = `Edit ${String(params.value ?? '')}`;
+        editButton.setAttribute('aria-label', `Edit ${String(params.value ?? '')}`);
+        editButton.innerHTML = '✎';
+        editButton.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          this.openSubjectEditor(String(params.node.key ?? params.value ?? ''));
+        });
+
+        wrapper.append(name, editButton);
+        return wrapper;
       }
     }
   };
@@ -87,13 +109,13 @@ export class AppComponent {
   groupDefaultExpanded = -1;
   rowDragManaged = true;
   suppressMoveWhenRowDragging = true;
+  refreshAfterGroupEdit = true;
   animateRows = true;
 
   getRowId = (params: GetRowIdParams<ProductRow>) => String(params.data.id);
 
   onGridReady(event: GridReadyEvent<ProductRow>): void {
     this.gridApi = event.api;
-    event.api.sizeColumnsToFit();
   }
 
   onRowDragEnd(event: RowDragEndEvent<ProductRow>): void {
@@ -104,34 +126,34 @@ export class AppComponent {
     this.rowData = updatedRows;
   }
 
-  renameSubject(oldSubject: string): void {
-    const trimmedOld = oldSubject.trim();
-    if (!trimmedOld) return;
-    const newName = window.prompt(`Rename subject "${trimmedOld}" to:`, trimmedOld)?.trim();
-    if (!newName || newName === trimmedOld) return;
+  openSubjectEditor(subject: string): void {
+    const value = subject.trim();
+    if (!value) return;
+    this.subjectBeingEdited = value;
+    this.editedSubjectName = value;
+    this.editingSubject = true;
+    setTimeout(() => document.querySelector<HTMLInputElement>('#subject-name-input')?.focus());
+  }
 
-    const affectedNodes: any[] = [];
-    this.gridApi?.forEachLeafNode(node => {
-      if (node.data?.subject === trimmedOld) {
-        node.data.subject = newName;
-        affectedNodes.push(node);
-      }
-    });
+  cancelSubjectEdit(): void {
+    this.editingSubject = false;
+    this.subjectBeingEdited = '';
+    this.editedSubjectName = '';
+  }
 
-    if (affectedNodes.length) {
+  saveSubjectEdit(): void {
+    const oldName = this.subjectBeingEdited.trim();
+    const newName = this.editedSubjectName.trim();
+    if (!oldName || !newName) return;
+
+    if (newName !== oldName) {
+      this.rowData = this.rowData.map(row =>
+        row.subject === oldName ? { ...row, subject: newName } : row
+      );
+      this.gridApi?.setGridOption('rowData', this.rowData);
       this.gridApi?.refreshClientSideRowModel('group');
-      this.gridApi?.refreshCells({ force: true });
-      this.rowData = this.rowData.map(row => row.subject === trimmedOld ? { ...row, subject: newName } : row);
     }
-  }
 
-  onCellDoubleClicked(event: any): void {
-    if (event.node?.group && event.column?.getColId() === 'ag-Grid-AutoColumn') {
-      this.renameSubject(String(event.node.key ?? ''));
-    }
-  }
-
-  private escapeHtml(value: string): string {
-    return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    this.cancelSubjectEdit();
   }
 }
