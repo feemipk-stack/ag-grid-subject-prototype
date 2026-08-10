@@ -42,7 +42,7 @@ export class AppComponent {
     English: 'Please label all books with the student name. Students should bring the required English resources to every lesson and keep activity books together.',
     Mathematics: 'Calculator required from Term 1. Please ensure the calculator and ruler are clearly labelled with the student name.',
     Science: 'Bring practical book to laboratory lessons. Safety and practical resources should remain together for easy access during class.',
-    Art: 'Keep art supplies together in a labelled bag. Colouring pencils and glue sticks will be used across multiple projects during the year.'
+    Art: ''
   };
 
   rowData: ProductRow[] = [
@@ -110,15 +110,20 @@ export class AppComponent {
       const noteArea = document.createElement('div');
       noteArea.className = 'subject-note-area';
 
+      const noteValue = (this.subjectNotes[subject] ?? '').trim();
+      const hasNote = noteValue.length > 0;
+
       const note = document.createElement('div');
-      note.className = 'subject-note';
-      note.textContent = this.subjectNotes[subject] || 'No subject note';
+      note.className = hasNote ? 'subject-note' : 'subject-note subject-note-placeholder';
+      note.textContent = hasNote ? noteValue : 'Subject Note goes here';
 
       const editNoteButton = this.createEditButton(
-        `Edit note for ${subject}`,
+        hasNote ? `Edit note for ${subject}` : `Add note for ${subject}`,
         () => this.openSubjectEditor(subject, 'note')
       );
       editNoteButton.classList.add('subject-note-edit-button');
+      editNoteButton.title = hasNote ? `Edit note for ${subject}` : `Add note for ${subject}`;
+      editNoteButton.setAttribute('aria-label', hasNote ? `Edit note for ${subject}` : `Add note for ${subject}`);
 
       noteArea.append(note, editNoteButton);
       content.append(heading, noteArea);
@@ -129,8 +134,6 @@ export class AppComponent {
 
   groupDefaultExpanded = -1;
 
-  // AG Grid 31 cannot use managed row dragging across row groups.
-  // Unmanaged dragging is used instead and the product's subject is changed on drop.
   rowDragManaged = false;
   animateRows = true;
 
@@ -170,7 +173,6 @@ export class AppComponent {
       row.id === draggedProduct.id ? { ...row, subject: targetSubject } : row
     );
 
-    // v31 API: replace rowData and let the client-side row model rebuild the groups.
     event.api.setRowData(this.rowData);
   }
 
