@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">BTS Pack Builder Prototype</p>
       <h1>Products grouped by subject</h1>
-      <p class="intro">Use the drag handle in the SKU column to move a product into another subject. Click the edit icon beside a subject to edit both its name and subject note. Subjects themselves cannot be dragged.</p>
+      <p class="intro">Each subject now uses the full grid width so longer notes can wrap naturally. Product rows keep the normal SKU, Product, Qty, Price and Line Total columns underneath.</p>
     </div>
     <div class="legend">
       <span>⋮⋮ Product = movable</span>
@@ -17,12 +17,14 @@
       [rowData]="rowData"
       [columnDefs]="columnDefs"
       [defaultColDef]="defaultColDef"
-      [autoGroupColumnDef]="autoGroupColumnDef"
+      [groupDisplayType]="groupDisplayType"
+      [groupRowRendererParams]="groupRowRendererParams"
       [groupDefaultExpanded]="groupDefaultExpanded"
       [rowDragManaged]="rowDragManaged"
       [suppressMoveWhenRowDragging]="suppressMoveWhenRowDragging"
       [refreshAfterGroupEdit]="refreshAfterGroupEdit"
       [animateRows]="animateRows"
+      [getRowHeight]="getRowHeight"
       [getRowId]="getRowId"
       (gridReady)="onGridReady($event)"
       (rowDragEnd)="onRowDragEnd($event)">
@@ -55,12 +57,12 @@
         <label for="subject-note-input">Subject note</label>
         <textarea
           id="subject-note-input"
-          rows="4"
+          rows="5"
           placeholder="Add a note for this subject"
           [value]="editedSubjectNote"
           (input)="editedSubjectNote = $any($event.target).value"
           (keydown.escape)="cancelSubjectEdit()"></textarea>
-        <p class="field-hint">This note belongs to the subject and is not repeated on each product row.</p>
+        <p class="field-hint">The note is displayed across the full subject row rather than being constrained to one column.</p>
       </div>
 
       <div class="modal-actions">
