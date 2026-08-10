@@ -14,9 +14,11 @@ h1 { margin: 0; font-size: 30px; }
 :host ::ng-deep .subject-full-content { width: 100%; min-width: 0; display: grid; grid-template-columns: minmax(180px, 260px) 1fr; gap: 18px; align-items: start; }
 :host ::ng-deep .subject-heading { display: flex; align-items: center; gap: 8px; min-width: 0; }
 :host ::ng-deep .subject-name { font-weight: 700; font-size: 15px; white-space: nowrap; }
-:host ::ng-deep .subject-note { color: #64748b; font-size: 13px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
+:host ::ng-deep .subject-note-area { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+:host ::ng-deep .subject-note { flex: 1 1 auto; min-width: 0; color: #64748b; font-size: 13px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
 :host ::ng-deep .subject-edit-button { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; font-size: 16px; line-height: 1; flex: 0 0 auto; }
 :host ::ng-deep .subject-edit-button:hover { background: #f1f5f9; border-color: #cbd5e1; color: #0f172a; }
+:host ::ng-deep .subject-note-edit-button { margin-top: -3px; }
 :host ::ng-deep .product-drag-cell .ag-row-drag { cursor: grab; opacity: .9; margin-right: 8px; }
 :host ::ng-deep .product-drag-cell .ag-row-drag:active { cursor: grabbing; }
 
