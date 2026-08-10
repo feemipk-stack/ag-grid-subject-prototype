@@ -6,14 +6,10 @@ import {
   GridApi,
   GridReadyEvent,
   ICellRendererParams,
-  ModuleRegistry,
   RowDragEndEvent,
   RowHeightParams,
-  ValidationModule,
 } from 'ag-grid-community';
-import { AllEnterpriseModule } from 'ag-grid-enterprise';
-
-ModuleRegistry.registerModules([AllEnterpriseModule, ValidationModule]);
+import 'ag-grid-enterprise';
 
 interface ProductRow {
   id: number;
@@ -40,6 +36,7 @@ export class AppComponent {
   subjectBeingEdited = '';
   editedSubjectName = '';
   editedSubjectNote = '';
+  editorFocus: 'name' | 'note' = 'name';
 
   subjectNotes: Record<string, string> = {
     English: 'Please label all books with the student name. Students should bring the required English resources to every lesson and keep activity books together.',
@@ -103,25 +100,28 @@ export class AppComponent {
       name.className = 'subject-name';
       name.textContent = subject;
 
-      const editButton = document.createElement('button');
-      editButton.type = 'button';
-      editButton.className = 'subject-edit-button';
-      editButton.title = `Edit ${subject}`;
-      editButton.setAttribute('aria-label', `Edit ${subject}`);
-      editButton.innerHTML = '✎';
-      editButton.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        this.ngZone.run(() => this.openSubjectEditor(subject));
-      });
+      const editNameButton = this.createEditButton(
+        `Edit subject ${subject}`,
+        () => this.openSubjectEditor(subject, 'name')
+      );
 
-      heading.append(name, editButton);
+      heading.append(name, editNameButton);
+
+      const noteArea = document.createElement('div');
+      noteArea.className = 'subject-note-area';
 
       const note = document.createElement('div');
       note.className = 'subject-note';
       note.textContent = this.subjectNotes[subject] || 'No subject note';
 
-      content.append(heading, note);
+      const editNoteButton = this.createEditButton(
+        `Edit note for ${subject}`,
+        () => this.openSubjectEditor(subject, 'note')
+      );
+      editNoteButton.classList.add('subject-note-edit-button');
+
+      noteArea.append(note, editNoteButton);
+      content.append(heading, noteArea);
       wrapper.append(content);
       return wrapper;
     }
@@ -149,19 +149,26 @@ export class AppComponent {
     this.rowData = updatedRows;
   }
 
-  openSubjectEditor(subject: string): void {
+  openSubjectEditor(subject: string, focus: 'name' | 'note' = 'name'): void {
     const value = subject.trim();
     if (!value) return;
 
     this.subjectBeingEdited = value;
     this.editedSubjectName = value;
     this.editedSubjectNote = this.subjectNotes[value] ?? '';
+    this.editorFocus = focus;
     this.editingSubject = true;
 
     setTimeout(() => {
-      const input = document.querySelector<HTMLInputElement>('#subject-name-input');
-      input?.focus();
-      input?.select();
+      if (this.editorFocus === 'note') {
+        const noteInput = document.querySelector<HTMLTextAreaElement>('#subject-note-input');
+        noteInput?.focus();
+        noteInput?.setSelectionRange(noteInput.value.length, noteInput.value.length);
+      } else {
+        const nameInput = document.querySelector<HTMLInputElement>('#subject-name-input');
+        nameInput?.focus();
+        nameInput?.select();
+      }
     });
   }
 
@@ -170,6 +177,7 @@ export class AppComponent {
     this.subjectBeingEdited = '';
     this.editedSubjectName = '';
     this.editedSubjectNote = '';
+    this.editorFocus = 'name';
   }
 
   saveSubjectEdit(): void {
@@ -191,5 +199,20 @@ export class AppComponent {
     this.subjectNotes[newName] = note;
     this.gridApi?.refreshCells({ force: true });
     this.cancelSubjectEdit();
+  }
+
+  private createEditButton(label: string, action: () => void): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'subject-edit-button';
+    button.title = label;
+    button.setAttribute('aria-label', label);
+    button.innerHTML = '✎';
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.ngZone.run(action);
+    });
+    return button;
   }
 }
