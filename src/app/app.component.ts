@@ -38,6 +38,14 @@ export class AppComponent {
   editingSubject = false;
   subjectBeingEdited = '';
   editedSubjectName = '';
+  editedSubjectNote = '';
+
+  subjectNotes: Record<string, string> = {
+    English: 'Please label all books with the student name.',
+    Mathematics: 'Calculator required from Term 1.',
+    Science: 'Bring practical book to laboratory lessons.',
+    Art: 'Keep art supplies together in a labelled bag.'
+  };
 
   rowData: ProductRow[] = [
     { id: 1, subject: 'English', sku: 'BK-ENG-101', product: 'English Activity Book', qty: 1, price: 8.95 },
@@ -60,12 +68,7 @@ export class AppComponent {
       rowDrag: params => !params.node.group,
       cellClass: 'product-drag-cell'
     },
-    {
-      field: 'product',
-      headerName: 'Product',
-      flex: 1,
-      minWidth: 300
-    },
+    { field: 'product', headerName: 'Product', flex: 1, minWidth: 300 },
     { field: 'qty', headerName: 'Qty', width: 100, editable: true },
     {
       field: 'price', headerName: 'Price', width: 120,
@@ -81,35 +84,42 @@ export class AppComponent {
   defaultColDef: ColDef<ProductRow> = { sortable: true, resizable: true, filter: true };
 
   autoGroupColumnDef: ColDef<ProductRow> = {
-    headerName: 'Subject', minWidth: 290, flex: 1,
+    headerName: 'Subject', minWidth: 430, flex: 1,
     cellRendererParams: {
       suppressCount: false,
       innerRenderer: (params: ICellRendererParams<ProductRow>) => {
         if (!params.node.group) return '';
 
+        const subject = String(params.node.key ?? params.value ?? '');
         const wrapper = document.createElement('span');
         wrapper.className = 'subject-display';
 
+        const text = document.createElement('span');
+        text.className = 'subject-text';
+
         const name = document.createElement('span');
         name.className = 'subject-name';
-        name.textContent = String(params.value ?? '');
+        name.textContent = subject;
+
+        const note = document.createElement('span');
+        note.className = 'subject-note';
+        note.textContent = this.subjectNotes[subject] || 'No subject note';
+
+        text.append(name, note);
 
         const editButton = document.createElement('button');
         editButton.type = 'button';
         editButton.className = 'subject-edit-button';
-        editButton.title = `Edit ${String(params.value ?? '')}`;
-        editButton.setAttribute('aria-label', `Edit ${String(params.value ?? '')}`);
+        editButton.title = `Edit ${subject}`;
+        editButton.setAttribute('aria-label', `Edit ${subject}`);
         editButton.innerHTML = '✎';
         editButton.addEventListener('click', event => {
           event.preventDefault();
           event.stopPropagation();
-
-          this.ngZone.run(() => {
-            this.openSubjectEditor(String(params.node.key ?? params.value ?? ''));
-          });
+          this.ngZone.run(() => this.openSubjectEditor(subject));
         });
 
-        wrapper.append(name, editButton);
+        wrapper.append(text, editButton);
         return wrapper;
       }
     }
@@ -141,6 +151,7 @@ export class AppComponent {
 
     this.subjectBeingEdited = value;
     this.editedSubjectName = value;
+    this.editedSubjectNote = this.subjectNotes[value] ?? '';
     this.editingSubject = true;
 
     setTimeout(() => {
@@ -154,6 +165,7 @@ export class AppComponent {
     this.editingSubject = false;
     this.subjectBeingEdited = '';
     this.editedSubjectName = '';
+    this.editedSubjectNote = '';
   }
 
   saveSubjectEdit(): void {
@@ -161,14 +173,19 @@ export class AppComponent {
     const newName = this.editedSubjectName.trim();
     if (!oldName || !newName) return;
 
+    const note = this.editedSubjectNote.trim();
+
     if (newName !== oldName) {
       this.rowData = this.rowData.map(row =>
         row.subject === oldName ? { ...row, subject: newName } : row
       );
+      delete this.subjectNotes[oldName];
       this.gridApi?.setGridOption('rowData', this.rowData);
       this.gridApi?.refreshClientSideRowModel('group');
     }
 
+    this.subjectNotes[newName] = note;
+    this.gridApi?.refreshCells({ force: true });
     this.cancelSubjectEdit();
   }
 }
