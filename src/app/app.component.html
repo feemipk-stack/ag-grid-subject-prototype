@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">BTS Pack Builder Prototype</p>
       <h1>Products grouped by subject</h1>
-      <p class="intro">Use the drag handle beside a product to move it into another subject. Click the edit icon beside a subject name to rename it. Subjects themselves cannot be dragged.</p>
+      <p class="intro">Use the drag handle in the SKU column to move a product into another subject. Click the edit icon beside a subject to edit both its name and subject note. Subjects themselves cannot be dragged.</p>
     </div>
     <div class="legend">
       <span>⋮⋮ Product = movable</span>
@@ -36,19 +36,32 @@
       <div class="modal-header">
         <div>
           <p class="modal-eyebrow">Edit subject</p>
-          <h2 id="subject-modal-title">Rename {{ subjectBeingEdited }}</h2>
+          <h2 id="subject-modal-title">{{ subjectBeingEdited }}</h2>
         </div>
         <button type="button" class="modal-close" aria-label="Close" (click)="cancelSubjectEdit()">×</button>
       </div>
 
-      <label for="subject-name-input">Subject name</label>
-      <input
-        id="subject-name-input"
-        type="text"
-        [value]="editedSubjectName"
-        (input)="editedSubjectName = $any($event.target).value"
-        (keydown.enter)="saveSubjectEdit()"
-        (keydown.escape)="cancelSubjectEdit()" />
+      <div class="form-field">
+        <label for="subject-name-input">Subject name</label>
+        <input
+          id="subject-name-input"
+          type="text"
+          [value]="editedSubjectName"
+          (input)="editedSubjectName = $any($event.target).value"
+          (keydown.escape)="cancelSubjectEdit()" />
+      </div>
+
+      <div class="form-field">
+        <label for="subject-note-input">Subject note</label>
+        <textarea
+          id="subject-note-input"
+          rows="4"
+          placeholder="Add a note for this subject"
+          [value]="editedSubjectNote"
+          (input)="editedSubjectNote = $any($event.target).value"
+          (keydown.escape)="cancelSubjectEdit()"></textarea>
+        <p class="field-hint">This note belongs to the subject and is not repeated on each product row.</p>
+      </div>
 
       <div class="modal-actions">
         <button type="button" class="button secondary" (click)="cancelSubjectEdit()">Cancel</button>
