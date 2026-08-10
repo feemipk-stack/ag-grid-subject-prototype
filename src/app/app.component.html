@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">BTS Pack Builder Prototype</p>
       <h1>Products grouped by subject</h1>
-      <p class="intro">Each subject now uses the full grid width so longer notes can wrap naturally. Product rows keep the normal SKU, Product, Qty, Price and Line Total columns underneath.</p>
+      <p class="intro">Each subject uses the full grid width so longer notes can wrap naturally. Drag a product using the handle in the SKU column and drop it on another subject or one of that subject's products.</p>
     </div>
     <div class="legend">
       <span>⋮⋮ Product = movable</span>
@@ -22,11 +22,11 @@
       [groupRowRendererParams]="groupRowRendererParams"
       [groupDefaultExpanded]="groupDefaultExpanded"
       [rowDragManaged]="rowDragManaged"
-      [suppressMoveWhenRowDragging]="suppressMoveWhenRowDragging"
       [animateRows]="animateRows"
       [getRowHeight]="getRowHeight"
       [getRowId]="getRowId"
       (gridReady)="onGridReady($event)"
+      (rowDragMove)="onRowDragMove($event)"
       (rowDragEnd)="onRowDragEnd($event)">
     </ag-grid-angular>
   </section>
