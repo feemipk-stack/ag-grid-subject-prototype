@@ -8,6 +8,7 @@ import {
   ICellRendererParams,
   ModuleRegistry,
   RowDragEndEvent,
+  RowHeightParams,
   ValidationModule,
 } from 'ag-grid-community';
 import { AllEnterpriseModule } from 'ag-grid-enterprise';
@@ -41,10 +42,10 @@ export class AppComponent {
   editedSubjectNote = '';
 
   subjectNotes: Record<string, string> = {
-    English: 'Please label all books with the student name.',
-    Mathematics: 'Calculator required from Term 1.',
-    Science: 'Bring practical book to laboratory lessons.',
-    Art: 'Keep art supplies together in a labelled bag.'
+    English: 'Please label all books with the student name. Students should bring the required English resources to every lesson and keep activity books together.',
+    Mathematics: 'Calculator required from Term 1. Please ensure the calculator and ruler are clearly labelled with the student name.',
+    Science: 'Bring practical book to laboratory lessons. Safety and practical resources should remain together for easy access during class.',
+    Art: 'Keep art supplies together in a labelled bag. Colouring pencils and glue sticks will be used across multiple projects during the year.'
   };
 
   rowData: ProductRow[] = [
@@ -83,45 +84,46 @@ export class AppComponent {
 
   defaultColDef: ColDef<ProductRow> = { sortable: true, resizable: true, filter: true };
 
-  autoGroupColumnDef: ColDef<ProductRow> = {
-    headerName: 'Subject', minWidth: 430, flex: 1,
-    cellRendererParams: {
-      suppressCount: false,
-      innerRenderer: (params: ICellRendererParams<ProductRow>) => {
-        if (!params.node.group) return '';
+  groupDisplayType: 'groupRows' = 'groupRows';
 
-        const subject = String(params.node.key ?? params.value ?? '');
-        const wrapper = document.createElement('span');
-        wrapper.className = 'subject-display';
+  groupRowRendererParams = {
+    suppressCount: false,
+    innerRenderer: (params: ICellRendererParams<ProductRow>) => {
+      const subject = String(params.node.key ?? params.value ?? '');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'subject-full-row';
 
-        const text = document.createElement('span');
-        text.className = 'subject-text';
+      const content = document.createElement('div');
+      content.className = 'subject-full-content';
 
-        const name = document.createElement('span');
-        name.className = 'subject-name';
-        name.textContent = subject;
+      const heading = document.createElement('div');
+      heading.className = 'subject-heading';
 
-        const note = document.createElement('span');
-        note.className = 'subject-note';
-        note.textContent = this.subjectNotes[subject] || 'No subject note';
+      const name = document.createElement('span');
+      name.className = 'subject-name';
+      name.textContent = subject;
 
-        text.append(name, note);
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.className = 'subject-edit-button';
+      editButton.title = `Edit ${subject}`;
+      editButton.setAttribute('aria-label', `Edit ${subject}`);
+      editButton.innerHTML = '✎';
+      editButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.ngZone.run(() => this.openSubjectEditor(subject));
+      });
 
-        const editButton = document.createElement('button');
-        editButton.type = 'button';
-        editButton.className = 'subject-edit-button';
-        editButton.title = `Edit ${subject}`;
-        editButton.setAttribute('aria-label', `Edit ${subject}`);
-        editButton.innerHTML = '✎';
-        editButton.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          this.ngZone.run(() => this.openSubjectEditor(subject));
-        });
+      heading.append(name, editButton);
 
-        wrapper.append(text, editButton);
-        return wrapper;
-      }
+      const note = document.createElement('div');
+      note.className = 'subject-note';
+      note.textContent = this.subjectNotes[subject] || 'No subject note';
+
+      content.append(heading, note);
+      wrapper.append(content);
+      return wrapper;
     }
   };
 
@@ -130,6 +132,8 @@ export class AppComponent {
   suppressMoveWhenRowDragging = true;
   refreshAfterGroupEdit = true;
   animateRows = true;
+
+  getRowHeight = (params: RowHeightParams<ProductRow>): number => params.node.group ? 82 : 42;
 
   getRowId = (params: GetRowIdParams<ProductRow>) => String(params.data.id);
 
