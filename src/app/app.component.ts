@@ -6,7 +6,6 @@ import {
   GridApi,
   GridReadyEvent,
   ICellRendererParams,
-  RowDragEndEvent,
   RowHeightParams,
 } from 'ag-grid-community';
 import 'ag-grid-enterprise';
@@ -29,6 +28,7 @@ interface ProductRow {
 })
 export class AppComponent {
   private gridApi?: GridApi<ProductRow>;
+  private dragTargetSubject: string | null = null;
 
   constructor(private ngZone: NgZone) {}
 
@@ -128,9 +128,10 @@ export class AppComponent {
   };
 
   groupDefaultExpanded = -1;
-  rowDragManaged = true;
-  suppressMoveWhenRowDragging = true;
-  refreshAfterGroupEdit = true;
+
+  // AG Grid 31 cannot use managed row dragging across row groups.
+  // Unmanaged dragging is used instead and the product's subject is changed on drop.
+  rowDragManaged = false;
   animateRows = true;
 
   getRowHeight = (params: RowHeightParams<ProductRow>): number => params.node.group ? 82 : 42;
@@ -141,12 +142,36 @@ export class AppComponent {
     this.gridApi = event.api;
   }
 
-  onRowDragEnd(event: RowDragEndEvent<ProductRow>): void {
-    const updatedRows: ProductRow[] = [];
-    event.api.forEachLeafNode(node => {
-      if (node.data) updatedRows.push({ ...node.data });
-    });
-    this.rowData = updatedRows;
+  onRowDragMove(event: any): void {
+    const overNode = event.overNode;
+    if (!overNode) {
+      this.dragTargetSubject = null;
+      return;
+    }
+
+    if (overNode.group) {
+      this.dragTargetSubject = String(overNode.key ?? '');
+      return;
+    }
+
+    this.dragTargetSubject = overNode.data?.subject ?? null;
+  }
+
+  onRowDragEnd(event: any): void {
+    const draggedProduct = event.node?.data as ProductRow | undefined;
+    const targetSubject = this.dragTargetSubject;
+    this.dragTargetSubject = null;
+
+    if (!draggedProduct || !targetSubject || draggedProduct.subject === targetSubject) {
+      return;
+    }
+
+    this.rowData = this.rowData.map(row =>
+      row.id === draggedProduct.id ? { ...row, subject: targetSubject } : row
+    );
+
+    // v31 API: replace rowData and let the client-side row model rebuild the groups.
+    event.api.setRowData(this.rowData);
   }
 
   openSubjectEditor(subject: string, focus: 'name' | 'note' = 'name'): void {
@@ -192,8 +217,7 @@ export class AppComponent {
         row.subject === oldName ? { ...row, subject: newName } : row
       );
       delete this.subjectNotes[oldName];
-      this.gridApi?.setGridOption('rowData', this.rowData);
-      this.gridApi?.refreshClientSideRowModel('group');
+      this.gridApi?.setRowData(this.rowData);
     }
 
     this.subjectNotes[newName] = note;
